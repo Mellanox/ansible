@@ -200,8 +200,6 @@ class MlnxosVlanApp(BaseMlnxosModule):
                     self._commands.append('no vlan %s' % vlan_id)
             else:
                 self._generate_vlan_commands(vlan_id, req_conf)
-        if self._commands:
-            self._commands.append("exit")
 
     def _generate_vlan_commands(self, vlan_id, req_conf):
         curr_vlan = self._current_config.get(vlan_id, {})

@@ -173,7 +173,10 @@ class MlnxosVlanInterfaceApp(BaseMlnxosModule):
         mlag_summary = mlag_data.get("MLAG IPLs Summary", {})
         for ipl_id, ipl_list in iteritems(mlag_summary):
             for ipl_data in ipl_list:
-                vlan_id = int(ipl_data.get("Vlan Interface", 0))
+                try:
+                    vlan_id = int(ipl_data.get("Vlan Interface", 0))
+                except ValueError:
+                    continue
                 vlan_data = self._current_config.get(vlan_id)
                 if vlan_data:
                     vlan_data['ipl'] = int(ipl_id)
@@ -235,8 +238,6 @@ class MlnxosVlanInterfaceApp(BaseMlnxosModule):
                 if_vlan_prefix, req_valn_if, curr_vlan_data)
             self._generate_magp_commands(
                 if_vlan_prefix, req_valn_if, curr_vlan_data)
-        if self._commands:
-            self._commands.append("exit")
 
     def _generate_ipaddress_commands(self, if_vlan_prefix, req_valn_if,
                                      curr_vlan_data):

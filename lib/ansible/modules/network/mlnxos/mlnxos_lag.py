@@ -274,9 +274,6 @@ class MlnxosLagApp(BaseMlnxosModule):
         self._generate_port_channel_commands(lag_id, lag_obj)
         self._generate_final_commands(lag_id, lag_obj)
 
-        if self._commands:
-            self._commands.append('exit')
-
     def check_declarative_intent_params(self, result):
         pass
 

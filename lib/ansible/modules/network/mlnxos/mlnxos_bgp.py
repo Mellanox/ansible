@@ -160,8 +160,6 @@ class MlnxosBgpApp(BaseMlnxosModule):
             self._generate_bgp_cmds()
         else:
             self._generate_no_bgp_cmds()
-        if self._commands:
-            self._commands.append('exit')
 
     def _generate_bgp_cmds(self):
         as_number = self._required_config['as_number']

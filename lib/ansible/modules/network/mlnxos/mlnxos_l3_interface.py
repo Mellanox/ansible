@@ -222,8 +222,6 @@ class MlnxosL3InterfaceApp(BaseMlnxosModule):
                     msg='could not find interface %s' % name)
                 continue
             self._generate_if_commands(name, req_if, curr_if)
-        if self._commands:
-            self._commands.append('exit')
 
     def _generate_if_commands(self, name, req_if, curr_if):
         state = req_if['state']

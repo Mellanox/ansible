@@ -258,7 +258,6 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
         args = ('speed', 'description', 'mtu')
         disable = req_if['disable']
         state = req_if['state']
-        add_exit = False
         interface_prefix = self.get_if_cmd(name)
 
         if state == 'absent':
@@ -276,16 +275,12 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
                         if attr_name in ('mtu', 'speed'):
                             cmd = cmd + ' ' + 'force'
                         self.add_command_to_interface(interface_prefix, cmd)
-                        add_exit = True
             curr_disable = curr_if.get('disable', False)
             if disable != curr_disable:
                 cmd = 'shutdown'
                 if disable:
                     cmd = "no %s" % cmd
                 self.add_command_to_interface(interface_prefix, cmd)
-                add_exit = True
-            if add_exit:
-                self._commands.append('exit')
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []
