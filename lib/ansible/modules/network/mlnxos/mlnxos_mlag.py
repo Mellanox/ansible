@@ -248,10 +248,10 @@ class MlnxosMLagApp(BaseMlnxosModule):
                     self._commands.append(
                         "%s no dcb priority-flow-control mode force" %
                         interface_prefix)
-                    self._commands.append(
-                        "%s switchport force" % interface_prefix)
-                    self._commands.append(
-                        "%s switchport mode access" % interface_prefix)
+                self._commands.append(
+                    "%s switchport force" % interface_prefix)
+                self._commands.append(
+                    "%s switchport mode access" % interface_prefix)
                 self._commands.append(
                     "%s %s %s mode %s" %
                     (interface_prefix, self.CHANNEL_GROUP, lag_id, lag_mode))
