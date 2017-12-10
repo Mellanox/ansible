@@ -170,8 +170,6 @@ class MlnxosProtocolApp(BaseMlnxosModule):
                 else:
                     command = enable_command
                 self._commands.append(command)
-        if self._commands:
-            self._commands.append("exit")
 
 
 def main():

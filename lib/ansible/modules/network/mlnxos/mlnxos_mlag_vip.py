@@ -138,8 +138,6 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
             self._generate_mlag_vip_cmds()
         else:
             self._generate_no_mlag_vip_cmds()
-        if self._commands:
-            self._commands.append('exit')
 
     def _generate_mlag_vip_cmds(self):
         current_group = self._current_config.get('group_name')

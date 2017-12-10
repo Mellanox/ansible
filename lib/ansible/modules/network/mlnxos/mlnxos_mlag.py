@@ -228,7 +228,7 @@ class MlnxosMLagApp(BaseMlnxosModule):
             self._commands.append(
                 "%s switchport mode hybrid" % pch_prefix)
             self._commands.append(
-                "%s switchport mode access vlan %s" % (pch_prefix, vlan_id))
+                "%s switchport access vlan %s" % (pch_prefix, vlan_id))
         self._commands.append(
             "%s no shutdown" % pch_prefix)
 
