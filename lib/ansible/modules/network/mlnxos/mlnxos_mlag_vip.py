@@ -54,6 +54,10 @@ options:
     description:
       - MLAG VIP state.
     choices: ['present', 'absent']
+  delay:
+    description:
+      - delay interval, in seconds, waiting for the changes on mlag VIP to take effect
+    default: 12
 """
 
 EXAMPLES = """
@@ -93,6 +97,7 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
             ipaddress=dict(),
             group_name=dict(),
             mac_address=dict(),
+            delay=dict(type='int', default=12),
             state=dict(choices=['present', 'absent'], default='present'),
         )
         argument_spec = dict()
@@ -108,6 +113,7 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
             'ipaddress': module_params['ipaddress'],
             'group_name': module_params['group_name'],
             'mac_address': module_params['mac_address'],
+            'delay': module_params['delay'],
             'state': module_params['state'],
         }
 
@@ -161,6 +167,13 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
     def _generate_no_mlag_vip_cmds(self):
         if self._current_config.get('group_name'):
             self._commands.append('no mlag-vip')
+
+    def check_declarative_intent_params(self, result):
+        if not result['changed']:
+            return
+        delay_interval = self._current_config.get('delay')
+        if delay_interval > 0 and :
+            time.sleep(delay_interval)
 
 
 def main():
