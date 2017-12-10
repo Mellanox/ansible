@@ -79,6 +79,7 @@ commands:
 """
 
 import re
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -172,7 +173,7 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
         if not result['changed']:
             return
         delay_interval = self._current_config.get('delay')
-        if delay_interval > 0 and :
+        if delay_interval > 0:
             time.sleep(delay_interval)
 
 
