@@ -172,9 +172,10 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
     def check_declarative_intent_params(self, result):
         if not result['changed']:
             return
-        delay_interval = self._current_config.get('delay')
+        delay_interval = self._required_config.get('delay')
         if delay_interval > 0:
             time.sleep(delay_interval)
+            show_cmd(self._module, cmd, json_fmt=False, fail_on_error=False)
 
 
 def main():
