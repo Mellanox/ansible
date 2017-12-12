@@ -178,7 +178,7 @@ class MlnxosLagApp(BaseMlnxosModule):
         interface_type = self.PORT_CHANNEL
         lag_config = get_interfaces_config(self._module, interface_type)
         lag_summary = get_interfaces_config(self._module, interface_type,
-                                            summary=True)
+                                            "summary")
         self._current_config = {}
 
         for item in lag_config:

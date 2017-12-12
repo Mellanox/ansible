@@ -55,12 +55,28 @@ options:
       - Maximum size of transmit packet.
   aggregate:
     description: List of Interfaces definitions.
+  duplex:
+    description:
+      - Interface link status
+    default: auto
+    choices: ['full', 'half', 'auto']
+  tx_rate:
+    description:
+      - Transmit rate in bits per second (bps).
+  rx_rate:
+    description:
+      - Receiver rate in bits per second (bps).
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on
         remote device. This wait is applicable for operational state argument
         which are I(state) with values C(up)/C(down).
     default: 10
+  purge:
+    description:
+      - Purge Interfaces not defined in the aggregate parameter.
+        This applies only for logical interface.
+    default: no
   state:
     description:
       - State of the Interface configuration, C(up) means present and
@@ -111,6 +127,7 @@ commands:
 """
 
 from copy import deepcopy
+import re
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
@@ -122,18 +139,21 @@ from ansible.module_utils.network.mlnxos.mlnxos import BaseMlnxosModule, \
 
 
 class MlnxosInterfaceModule(BaseMlnxosModule):
+    ETH_IF_NAME_REGEX = re.compile(r'^Eth(\d\/\d+(|\/\d))$')
 
     @classmethod
     def _get_element_spec(cls):
         return dict(
-            name=dict(),
+            name=dict(type='str'),
             description=dict(),
             speed=dict(choices=['1G', '10G', '25G', '40G', '50G', '56G', '100G']),
             mtu=dict(type='int'),
             enabled=dict(default=True, type='bool'),
             delay=dict(default=10, type='int'),
             state=dict(default='present',
-                       choices=['present', 'absent', 'up', 'down'])
+                       choices=['present', 'absent', 'up', 'down']),
+            tx_rate=dict(),
+            rx_rate=dict(),
         )
 
     @classmethod
@@ -154,6 +174,7 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             argument_spec = dict(
                 aggregate=dict(type='list', elements='dict',
                                options=aggregate_spec),
+                purge=dict(default=False, type='bool'),
             )
         else:
             argument_spec = dict()
@@ -165,6 +186,25 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             required_one_of=required_one_of,
             mutually_exclusive=mutually_exclusive,
             supports_check_mode=True)
+
+    def validate_name(self, value):
+        if not self.ETH_IF_NAME_REGEX.match(value):
+            self._module.fail_json(msg='Invalid interface name!')
+
+    def validate_purge(self, value):
+        if value:
+            self._module.fail_json(
+                msg='Purge is not supported for ethernet interfaces!')
+
+    def validate_duplex(self, value):
+        if value != 'auto':
+            self._module.fail_json(
+                msg='Duplex is not supported for ethernet interfaces')
+
+    def validate_state(self, value):
+        if value == 'absent':
+            self._module.fail_json(
+                msg='Cannot remove physical interfaces')
 
     def get_required_config(self):
         self._required_config = list()
@@ -178,7 +218,6 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
 
                 self.validate_param_values(item, item)
                 req_item = item.copy()
-                req_item['disable'] = not req_item['enabled']
                 self._required_config.append(req_item)
 
         else:
@@ -189,10 +228,12 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
                 'mtu': module_params['mtu'],
                 'state': module_params['state'],
                 'delay': module_params['delay'],
+                'enabled': module_params['enabled'],
+                'tx_rate': module_params['tx_rate'],
+                'rx_rate': module_params['rx_rate'],
             }
 
             self.validate_param_values(params)
-            params['disable'] = not module_params['enabled']
             self._required_config.append(params)
 
     @classmethod
@@ -232,13 +273,16 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
             'description': self.get_config_attr(item, 'Description'),
             'speed': self.get_speed(item),
             'mtu': self.get_mtu(item),
-            'disable': not self.get_admin_state(item),
+            'enabled': self.get_admin_state(item),
             'state': self.get_oper_state(item)
         }
 
+    def _get_interfaces_config(self):
+        return get_interfaces_config(self._module, "ethernet")
+
     def load_current_config(self):
         self._current_config = dict()
-        config = get_interfaces_config(self._module, "ethernet")
+        config = self._get_interfaces_config()
 
         for item in config:
             name = self.get_if_name(item)
@@ -256,47 +300,95 @@ class MlnxosInterfaceModule(BaseMlnxosModule):
 
     def _generate_if_commands(self, name, req_if, curr_if):
         args = ('speed', 'description', 'mtu')
-        disable = req_if['disable']
-        state = req_if['state']
+        enabled = req_if['enabled']
+        add_exit = False
         interface_prefix = self.get_if_cmd(name)
 
-        if state == 'absent':
-            curr_state = curr_if['state']
-            if curr_state == "up":
-                self._commands.append('no ' + interface_prefix)
+        for attr_name in args:
+            candidate = req_if.get(attr_name)
+            running = curr_if.get(attr_name)
+            if candidate != running:
+                if candidate:
+                    cmd = attr_name + ' ' + str(candidate)
+                    if attr_name in ('mtu', 'speed'):
+                        cmd = cmd + ' ' + 'force'
+                    self.add_command_to_interface(interface_prefix, cmd)
+                    add_exit = True
+        curr_enabled = curr_if.get('enabled', False)
+        if enabled != curr_enabled:
+            cmd = 'shutdown'
+            if enabled:
+                cmd = "no %s" % cmd
+            self.add_command_to_interface(interface_prefix, cmd)
+            add_exit = True
+        if add_exit:
+            self._commands.append('exit')
 
-        else:
-            for attr_name in args:
-                candidate = req_if.get(attr_name)
-                running = curr_if.get(attr_name)
-                if candidate != running:
-                    if candidate:
-                        cmd = attr_name + ' ' + str(candidate)
-                        if attr_name in ('mtu', 'speed'):
-                            cmd = cmd + ' ' + 'force'
-                        self.add_command_to_interface(interface_prefix, cmd)
-            curr_disable = curr_if.get('disable', False)
-            if disable != curr_disable:
-                cmd = 'shutdown'
-                if disable:
-                    cmd = "no %s" % cmd
-                self.add_command_to_interface(interface_prefix, cmd)
+    def _get_interfaces_rates(self):
+        return get_interfaces_config(self._module, "ethernet", "rates")
+
+    def _get_interfaces_status(self):
+        return get_interfaces_config(self._module, "ethernet", "status")
 
     def check_declarative_intent_params(self, result):
         failed_conditions = []
+        delay_called = False
+        rates = None
+        statuses = None
         for req_if in self._required_config:
             want_state = req_if.get('state')
+            want_tx_rate = req_if.get('tx_rate')
+            want_rx_rate = req_if.get('rx_rate')
             name = req_if['name']
-            if want_state not in ('up', 'down'):
+            if want_state not in ('up', 'down') and not want_tx_rate and not \
+                    want_rx_rate:
                 continue
+            if not delay_called and result['changed']:
+                delay_called = True
+                delay = req_if['delay']
+                if delay > 0:
+                    sleep(delay)
+            if want_state in ('up', 'down'):
+                if not statuses:
+                    statuses = self._get_interfaces_status()
+                    curr_if = statuses.get(name)
+                    curr_state = None
+                    if curr_if:
+                        curr_if = curr_if[0]
+                        curr_state = self.get_oper_state(curr_if)
+                    if curr_state is None or not \
+                            conditional(want_state, curr_state.strip()):
+                        failed_conditions.append(
+                            'state ' + 'eq(%s)' % want_state)
+            if_rates = None
+            if want_tx_rate or want_rx_rate:
+                if not rates:
+                    rates = self._get_interfaces_rates()
+                if_rates = rates.get(name)
+                if if_rates:
+                    if_rates = if_rates[0]
+            if want_tx_rate:
+                have_tx_rate = None
+                if if_rates:
+                    have_tx_rate = if_rates.get('egress rate')
+                    if have_tx_rate:
+                        have_tx_rate = have_tx_rate.split()[0]
+                if have_tx_rate is None or not \
+                        conditional(want_tx_rate, have_tx_rate.strip(),
+                                    cast=int):
+                    failed_conditions.append('tx_rate ' + want_tx_rate)
 
-            if result['changed']:
-                sleep(req_if['delay'])
-            curr_if = self._current_config.get(name)
-            curr_state = curr_if['state']
-            if curr_state is None or not \
-                    conditional(want_state, curr_state.strip()):
-                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+            if want_rx_rate:
+                have_rx_rate = None
+                if if_rates:
+                    have_rx_rate = if_rates.get('ingress rate')
+                    if have_rx_rate:
+                        have_rx_rate = have_rx_rate.split()[0]
+                if have_rx_rate is None or not \
+                        conditional(want_rx_rate, have_rx_rate.strip(),
+                                    cast=int):
+                    failed_conditions.append('rx_rate ' + want_rx_rate)
+
         return failed_conditions
 
 

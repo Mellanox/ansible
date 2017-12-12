@@ -175,6 +175,8 @@ class MlnxosMLagVipApp(BaseMlnxosModule):
         delay_interval = self._required_config.get('delay')
         if delay_interval > 0:
             time.sleep(delay_interval)
+            for cmd in ("show mlag-vip", ""):
+                show_cmd(self._module, cmd, json_fmt=False, fail_on_error=False)
 
 
 def main():

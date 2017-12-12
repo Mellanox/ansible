@@ -20,7 +20,6 @@
 import json
 import os
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.utils import to_list, EntityCollection
 
@@ -80,6 +79,35 @@ def load_config(module, config):
         module.fail_json(msg=to_text(exc))
 
 
+def _parse_json_output(out):
+    out_list = out.split('\n')
+    first_index = 0
+    opening_char = None
+    lines_count = len(out_list)
+    while first_index < lines_count:
+        first_line = out_list[first_index].strip()
+        if not first_line or first_line[0] not in ("[", "{"):
+            first_index += 1
+            continue
+        opening_char = first_line[0]
+        break
+    if not opening_char:
+        return "null"
+    closing_char = ']' if opening_char == '[' else '}'
+    last_index = lines_count - 1
+    found = False
+    while last_index > first_index:
+        last_line = out_list[last_index].strip()
+        if not last_line or last_line[0] != closing_char:
+            last_index -= 1
+            continue
+        found = True
+        break
+    if not found:
+        return opening_char + closing_char
+    return "".join(out_list[first_index:last_index + 1])
+
+
 def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
     if json_fmt:
         cmd += " | json-print"
@@ -93,15 +121,7 @@ def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
         return None
 
     if json_fmt:
-        out = os.linesep.join([s for s in out.splitlines() if s]).strip()
-        if out[0] in ("[", "{"):
-            if out[0] == '[':
-                last_index = out.rfind(']')
-            elif  out[0] == '{':
-                last_index = out.rfind('}')
-            out = out[0:last_index+1]
-        else:
-            out = "{}"
+        out = _parse_json_output(out)
         try:
             cfg = json.loads(out)
         except ValueError:
@@ -113,11 +133,10 @@ def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
     return cfg
 
 
-def get_interfaces_config(module, interface_type, json_fmt=True,
-                          summary=False):
+def get_interfaces_config(module, interface_type, flags=None, json_fmt=True):
     cmd = "show interfaces %s" % interface_type
-    if summary:
-        cmd += " summary"
+    if flags:
+        cmd += " %s" % flags
     return show_cmd(module, cmd, json_fmt)
 
 
@@ -208,4 +227,3 @@ class BaseMlnxosModule(object):
     def main(cls):
         app = cls()
         app.run()
-
