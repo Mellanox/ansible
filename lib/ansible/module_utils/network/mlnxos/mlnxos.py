@@ -18,7 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 import json
-
+import os
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -93,10 +93,15 @@ def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
         return None
 
     if json_fmt:
-        out_list = out.split('\n', 1)
-        line = out_list[0].strip()
-        if line and line[0] not in ("[", "{"):
-            out = out_list[1]
+        out = os.linesep.join([s for s in out.splitlines() if s]).strip()
+        if out[0] in ("[", "{"):
+            if out[0] == '[':
+                last_index = out.rfind(']')
+            elif  out[0] == '{':
+                last_index = out.rfind('}')
+            out = out[0:last_index+1]
+        else:
+            out = "{}"
         try:
             cfg = json.loads(out)
         except ValueError:
