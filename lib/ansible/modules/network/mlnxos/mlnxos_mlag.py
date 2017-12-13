@@ -181,7 +181,7 @@ class MlnxosMLagApp(BaseMlnxosModule):
                 'members': []
             }
             self._current_config[lag_id] = obj
-
+        lag_summary = lag_summary.get("MLAG Port-Channel Summary", {})
         for lag_name, lag_data in iteritems(lag_summary):
             lag_id = self.extract_lag_id(lag_name)
             if not lag_id:
