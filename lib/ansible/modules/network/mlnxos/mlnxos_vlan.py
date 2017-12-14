@@ -182,6 +182,8 @@ class MlnxosVlanApp(BaseMlnxosModule):
         # called in base class in run function
         self._current_config = dict()
         vlan_config = show_cmd(self._module, "show vlan")
+        if not vlan_config:
+            return
         for vlan_id, vlan_data in iteritems(vlan_config):
             self._current_config[vlan_id] = \
                 self._create_vlan_data(vlan_id, vlan_data)
