@@ -1,0 +1,96 @@
+#########
+## Configured by Ansible
+#########
+
+# Loopback interface
+auto lo
+iface lo inet loopback
+  address 10.1.1.2/32
+  clagd-vxlan-anycast-ip 10.10.10.1
+  alias loopback interface
+
+# Management interface
+auto eth0
+iface eth0 inet dhcp
+    alias management interface
+    vrf mgmt
+
+auto mgmt
+iface mgmt
+    address 127.0.0.1/8
+    vrf-table auto
+
+# Port to Server
+auto swp7
+iface swp7
+link-autoneg on
+alias to Server01
+  # This is required for Vagrant only
+  # post-up ip link set swp1 promisc on
+
+
+# Port to Leaf01
+auto swp1
+iface swp1
+alias to Leaf01
+  # This is required for Vagrant only
+  # post-up ip link set swp49 promisc on
+
+# Port to Leaf01
+auto swp2
+iface swp2
+alias to Leaf01
+  # This is required for Vagrant only
+  # post-up ip link set swp50 promisc on
+
+# Port to Spine01
+auto swp5
+iface swp5
+alias to Spine01
+
+# Port to Spine02
+auto swp6
+iface swp6
+alias to Spine02
+
+# CLAG Peerlink bond
+auto peerlink
+iface peerlink
+bond-slaves swp1 swp2
+
+# CLAG Peerlink L2 interface.
+# This creates VLAN 4094 that only lives on the peerlink bond
+# No other interface will be aware of VLAN 4094
+auto peerlink.4094
+iface peerlink.4094
+  address 169.254.1.2/30
+  clagd-peer-ip 169.254.1.1
+  clagd-backup-ip 10.1.1.1
+  clagd-sys-mac 44:39:39:ff:40:94
+  clagd-priority 200
+
+# Bond to Server
+auto bond01
+iface bond01
+  bond-slaves swp7
+  bridge-access 13
+  clag-id 1
+
+# Define the bridge for STP
+auto bridge
+iface bridge
+  bridge-vlan-aware yes
+  bridge-ports bond01 peerlink vni13
+  bridge-vids 13 
+  bridge-pvid 1
+
+# VxLAN Tunnel for Server1-Server3 (Vlan 13)
+auto vni13
+iface vni13
+  vxlan-id 13
+  vxlan-local-tunnelip 10.1.1.2
+  bridge-access 13
+  bridge-learning off
+  mstpctl-bpduguard yes
+  mstpctl-portbpdufilter yes
+

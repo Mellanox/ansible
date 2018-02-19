@@ -1,0 +1,105 @@
+---
+- hosts: network
+  become: yes
+  pre_tasks:
+    # To prevent unexpected problems, define the minimum Cumulus Linux
+    # Release supported by this demo.
+    - name: Verify Minimum Software Version
+      assert:
+        that: "{{ansible_lsb.release | version_compare('3.0', '>=') }}"
+        msg: "Cumulus Linux version must be 3.0 or later. Version {{ansible_lsb.release}} detected"
+
+  tasks:
+    - name: Enable Quagga Zebra
+      lineinfile:
+        dest: /etc/quagga/daemons
+        line: "zebra=yes"
+        regexp: "zebra="
+      notify: restart quagga service
+
+    - name: Enable Quagga BGP
+      lineinfile:
+        dest: /etc/quagga/daemons
+        line: "bgpd=yes"
+        regexp: "bgpd="
+      notify: restart quagga service
+
+    - name: Copy Interfaces File
+      copy:
+        src: roles/{{ansible_hostname}}/interfaces
+        dest: /etc/network/interfaces
+        validate: ifup -a -s -i %s
+      notify: apply interface changes
+
+    - name: Copy Routing Configuration
+      copy:
+        src: roles/{{ansible_hostname}}/Quagga.conf
+        dest: /etc/quagga/Quagga.conf
+        validate: vtysh -C -f %s
+      notify: apply quagga config
+
+  handlers:
+    - name: restart quagga service
+      service:
+        name: quagga
+        state: restarted
+
+    - name: apply interface changes
+      service:
+        name: networking
+        state: reloaded
+
+    - name: apply quagga config
+      service:
+        name: quagga
+        state: reloaded
+
+
+- hosts: servers
+  become: yes
+  tasks:
+    - name: Copy Interface Config
+      copy:
+        src: roles/{{ansible_hostname}}/interfaces
+        dest: /etc/network/interfaces
+      register: reboot
+
+    # Ping script is so servers generate traffic to populate MAC tables
+    - name: Configure Server01 Ping Cronjob
+      cron:
+        name: "server ping"
+        job: "ping -c 1 10.1.3.103"
+      become: yes
+      become_user: cumulus
+      when: inventory_hostname == "server01"
+
+    - name: Configure Server01 Ping Cronjob
+      cron:
+        name: "server ping"
+        job: "ping -c 1 10.2.4.104"
+      become: yes
+      become_user: cumulus
+      when: inventory_hostname == "server02"
+
+    - name: Correct LLDP Settings
+      lineinfile:
+        dest: /etc/lldpd.d/port_info.conf
+        line: "configure lldp portidsubtype ifname"
+        create: yes
+      notify: restart LLDP
+
+    - name: Apply LLDP Settings
+      meta: flush_handlers
+
+    - name: reboot
+      command: /sbin/shutdown -r +1
+      async: 0
+      poll: 0
+      ignore_errors: true
+      when: reboot.changed
+
+  handlers:
+    - name: restart LLDP
+      service:
+        name: lldpd
+        state: restarted

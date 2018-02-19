@@ -1,0 +1,50 @@
+auto lo
+iface lo inet loopback
+    address 10.0.0.11/32
+
+auto eth0
+iface eth0 inet dhcp
+
+# uplinks
+auto swp5
+iface swp5
+
+auto swp6
+iface swp6
+
+# peerlink
+auto swp15
+iface swp15
+
+auto swp16
+iface swp16
+
+auto peerlink
+iface peerlink
+    bond-slaves swp15 swp16
+
+auto peerlink.4094
+iface peerlink.4094
+    address 169.254.255.1
+    netmask 255.255.255.0
+    clagd-priority 4096
+    clagd-peer-ip 169.254.255.2
+    clagd-backup-ip 10.0.0.12
+    clagd-sys-mac 44:38:39:ff:00:01
+
+# bridge to hosts
+auto swp7
+iface swp7
+link-speed 10000
+
+auto server1
+iface server1
+    bond-slaves swp7
+    clag-id 1
+
+
+auto br0
+iface br0
+    bridge-ports peerlink server1 
+    address 172.16.1.1/24
+    bridge-stp on

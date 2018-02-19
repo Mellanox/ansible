@@ -1,0 +1,64 @@
+#########
+## Configured by Ansible
+#########
+
+# Loopback interface
+auto lo
+iface lo inet loopback
+    address 10.1.1.3/32
+    alias loopback interface
+
+# Management interface
+auto eth0
+iface eth0 inet dhcp
+    alias management interface
+    vrf mgmt
+
+auto swp6
+iface swp6
+    address 23.23.23.23/24
+    alias to Spine02
+
+auto swp11
+iface swp11
+    bridge-access 13
+    link-autoneg yes
+    # test server link for initiating PINGS
+
+auto bridge
+iface bridge
+    bridge-ports swp7 swp11 vni13
+    bridge-pvid 1
+    bridge-vids 13
+    bridge-vlan-aware yes
+
+auto mgmt
+iface mgmt
+    address 127.0.0.1/8
+    vrf-table auto
+
+# Port to Server
+auto swp7
+iface swp7
+    alias to Server03
+    link-autoneg on
+    bridge-access 13
+    # This is required for Vagrant only
+    # post-up ip link set swp1 promisc on
+
+# Port to Spine01
+auto swp5
+iface swp5
+alias to Spine01
+
+# Port to Spine02
+# VxLAN Tunnel for Server1-Server3 (Vlan 13)
+auto vni13
+iface vni13
+    vxlan-id 13
+    vxlan-local-tunnelip 10.1.1.3
+    bridge-access 13
+    bridge-learning off
+    mstpctl-bpduguard yes
+    mstpctl-portbpdufilter yes
+

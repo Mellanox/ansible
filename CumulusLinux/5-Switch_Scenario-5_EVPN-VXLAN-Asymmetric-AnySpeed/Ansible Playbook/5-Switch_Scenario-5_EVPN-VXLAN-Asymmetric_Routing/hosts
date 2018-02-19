@@ -1,0 +1,30 @@
+[local]
+localhost
+
+# Change Management IP address of the switches
+# Change the name of your switches or servers to exactly matching this file, or change this file as per your switch name. If you change this file, then change the folder names under inventory folder too.
+# Change the password of switches
+[leaf]
+leaf01 ansible_host=10.20.4.93 ansible_connection=ssh ansible_user=cumulus ansible_ssh_pass=CumulusLinux! ansible_sudo_pass=CumulusLinux!
+leaf02 ansible_host=10.20.4.79 ansible_connection=ssh ansible_user=cumulus ansible_ssh_pass=CumulusLinux! ansible_sudo_pass=CumulusLinux!
+leaf03  ansible_host=10.20.4.23 ansible_connection=ssh ansible_user=cumulus ansible_ssh_pass=CumulusLinux! ansible_sudo_pass=CumulusLinux!
+
+[spine]
+spine01 ansible_host=10.20.4.103 ansible_connection=ssh ansible_user=cumulus ansible_ssh_pass=CumulusLinux! ansible_sudo_pass=CumulusLinux!
+spine02 ansible_host=10.20.4.52 ansible_connection=ssh ansible_user=cumulus ansible_ssh_pass=CumulusLinux! ansible_sudo_pass=CumulusLinux!
+
+[mlag-servers]
+mti-vishal-01
+
+[standalone-servers]
+mti-vishal-02
+
+[network:children]
+leaf
+spine
+
+[mlag-server:children]
+mlag-servers
+
+[standalone-server:children]
+standalone-servers

@@ -1,0 +1,59 @@
+---
+- hosts: network
+  remote_user: cumulus
+  become: yes
+  tasks:
+    - name: copy interfaces
+      copy: src=inventory/{{ansible_hostname}}/interfaces dest=/etc/network/
+    - name: copy Quagga daemons
+      copy: src=inventory/{{ansible_hostname}}/daemons dest=/etc/quagga/
+    - name: copy Quagga conf
+      copy: src=inventory/{{ansible_hostname}}/Quagga.conf dest=/etc/quagga/
+    - name: reload networking
+      command: ifreload -a
+    - name: reload quagga
+      service: name=quagga state=restarted
+
+- hosts: mlag-server
+  become: yes
+  tasks:
+    - name: install ifenslave package
+      apt: name={{ item }} update_cache=yes
+      with_items:
+       - ifenslave
+    - name: Setup bonding module in Kernel
+      command: modprobe bonding
+    - name: copy interfaces
+      copy: src=inventory/{{ansible_hostname}}/interfaces dest=/etc/network/      
+    - name: restarts servers with their new configuration
+      shell: sleep 1 && shutdown -r 0
+      async: 1
+      poll: 0
+      ignore_errors: true
+    - name: Wait for everything to come back up
+      local_action: 
+         module: wait_for
+           host="{{ inventory_hostname }}" 
+           port=22  
+           delay=10
+           timeout=300
+
+- hosts: standalone-server
+  become: yes
+  tasks:
+    - name: copy interfaces
+      copy: src=inventory/{{ansible_hostname}}/interfaces dest=/etc/network/
+    - name: restarts servers with their new configuration
+      shell: sleep 1 && shutdown -r 0
+      async: 1
+      poll: 0
+      ignore_errors: true
+    - name: Wait for everything to come back up
+      local_action:
+         module: wait_for
+           host="{{ inventory_hostname }}"
+           port=22
+           delay=10
+           timeout=300
+
+

@@ -1,0 +1,13 @@
+auto enp4s0f0
+iface enp4s0f0 inet dhcp
+
+auto enp130s0
+iface enp130s0 inet static
+    address 10.2.4.102
+    netmask 255.255.255.0
+    post-up ip route add 10.1.3.0/24 via 10.2.4.1 dev enp130s0
+
+
+# install ifenslave
+# modprobe bonding
+

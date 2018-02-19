@@ -1,0 +1,25 @@
+auto enp4s0f0
+iface enp4s0f0 inet dhcp
+
+auto enp129s0
+iface enp129s0 inet manual
+    bond-master uplink
+
+auto enp3s0
+iface enp3s0 inet manual
+    bond-master uplink
+
+
+auto uplink
+iface uplink inet static
+  bond-slaves none
+  bond-mode 802.3ad
+  bond-miimon 100
+  bond-lacp-rate 1
+  bond-min-links 1
+  bond-xmit-hash-policy layer3+4
+  address 10.2.4.104
+  netmask 255.255.255.0
+
+# install ifenslave
+# modprobe bonding
