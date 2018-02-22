@@ -1,0 +1,107 @@
+---
+
+# This task for coniguring leaf2 switch
+
+- name: configure protocols
+  onyx_protocol:
+    spanning_tree: disabled
+    ip_routing: enabled
+    lacp: enabled
+    mlag: enabled
+    magp: enabled
+
+- name: Configure vlans
+  onyx_vlan:
+    aggregate:
+      - vlan_id: 4000
+      - vlan_id: 172
+
+- name: Configure Lag interface
+  onyx_linkagg:
+    name: Po4000
+    members:
+      - Eth1/13
+      - Eth1/14
+    mode: active
+
+- name: Configure MLag interface
+  onyx_linkagg:
+    name: Mpo1
+    members:
+      - Eth1/1
+    mode: active
+
+- name: Configure MLAG VLAN
+  onyx_l2_interface:
+    name: Mpo1
+    mode: access
+    access_vlan: 172
+
+- name: create loopback interface
+  onyx_interface:
+    name: Loopback 0
+    description: router interface
+
+- name: create vlan interfaces
+  onyx_interface:
+    aggreagte:
+      - name: Vlan 172
+      - name: Vlan 4000
+
+- name: Configure L3 interfaces interface ip address
+  onyx_l3_interface:
+    aggreagte:
+      - name: Vlan 172
+        ipv4: 172.16.1.252/24
+      - name: Vlan 4000
+        ipv4: 1.1.1.1/30
+      - name: Eth1/5
+        ipv4: 100.50.0.1/24
+      - name: Eth1/8
+        ipv4: 100.30.0.1/24
+      - name: Loopback 0
+        ipv4: 10.0.0.11/32
+
+- name: configure ospf
+  onyx_ospf:
+    ospf: 1
+    router_id: 10.0.0.11
+    interfaces:
+      - name: Loopback 0
+        area: 0.0.0.0
+      - name: Eth1/5
+        area: 0.0.0.0
+      - name: Eth1/8
+        area: 0.0.0.0
+
+- name: configure vlan interface magp
+  onyx_magp:
+    magp_id: 172
+    interface: Vlan 172
+    router_ip: 172.16.1.254
+    router_mac: AA:BB:CC:DD:EE:FF
+
+- name: configure mlag-vip
+  onyx_mlag_vip:
+    ipaddress: 123.123.123.123/30
+    group_name: MLAGCLUSTER
+    mac_address: aa:99:80:80:80:80
+
+- name: configure IPL Lag interface
+  onyx_mlag_ipl:
+    name: Po4000
+    vlan_interface: Vlan 4000
+    peer_address: 1.1.1.2
+
+- name: configure bgp router
+  onyx_bgp:
+    as_number: 65012
+    router_id: 10.0.0.11
+    neighbors:
+      - remote_as: 65021
+        neighbor: 10.0.0.21
+      - remote_as: 65022
+        neighbor: 10.0.0.22
+    networks:
+      - 172.16.1.0/24
+    state: present

@@ -1,0 +1,65 @@
+---
+
+# This task for coniguring spine2 switch
+
+- name: configure protocols
+  onyx_protocol:
+    spanning_tree: disabled
+    ip_routing: enabled
+    bgp: enabled
+    ospf: enabled
+
+- name: configure interfaces
+  onyx_interface:
+    aggregate:
+      - name: Eth1/13
+        description: leaf1-link
+      - name: Eth1/25
+        description: leaf2-link
+      - name: Eth1/15
+        description: leaf3-link
+    state: enabled
+
+- name: configure loopback interface
+  onyx_interface:
+    name: Loopback 0
+    description: router interface
+
+- name: configure l3 interfaces
+  onyx_l3_interface:
+    aggregate:
+      - name: Loopback 0
+        ipv4: 10.0.0.22/32
+      - name: Eth1/13
+      - ipv4: 100.40.0.2/24
+      - name: Eth1/15
+      - ipv4: 100.10.0.2/24
+      - name: Eth1/25
+      - ipv4: 100.50.0.2/24
+
+- name: configure ospf
+  onyx_ospf:
+    ospf: 1
+    router_id: 10.0.0.12
+    interfaces:
+      - name: Loopback 0
+        area: 0.0.0.0
+      - name: Eth1/13
+        area: 0.0.0.0
+      - name: Eth1/15
+        area: 0.0.0.0
+      - name: Eth1/25
+        area: 0.0.0.0
+
+- name: configure bgp router
+  onyx_bgp:
+    as_number: 65022
+    router_id: 10.0.0.22
+    neighbors:
+      - remote_as: 65011
+        neighbor: 10.0.0.11
+      - remote_as: 65012
+        neighbor: 10.0.0.12
+      - remote_as: 65013
+        neighbor: 10.0.0.13
+    state: present

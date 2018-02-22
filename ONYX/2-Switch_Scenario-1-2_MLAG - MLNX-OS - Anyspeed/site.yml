@@ -1,0 +1,40 @@
+---
+# configure mlag
+
+- name: configure leaf 1
+  hosts: leaf1
+  gather_facts: no
+  connection: network_cli
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+    speed: 10G
+    ipl_vlan: 301
+    mlag_vlan: 201
+  remote_user: admin
+  roles:
+     - leaf1
+
+- name: configure leaf 2
+  hosts: leaf2
+  gather_facts: no
+  connection: network_cli
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+    speed: 10G
+    ipl_vlan: 301
+    mlag_vlan: 201
+  roles:
+     - leaf2
+
+- name: configure hosts
+  hosts: servers
+  connection: ssh
+  gather_facts: False
+  become: yes
+  remote_user: root
+  roles:
+    - servers

@@ -1,0 +1,17 @@
+# This task for coniguring hosts
+- name: enable bonding
+  shell: modprobe bonding
+
+- name: copy network files
+  copy:
+    src: inventory/{{inventory_hostname}}/
+    dest: /etc/sysconfig/network-scripts/
+
+- name: restart bond0 interface
+  shell: "ifdown bond0 && ifup bond0"
+
+- name: restart network
+  become: true
+  service:
+    name: network
+    state: restarted

@@ -1,0 +1,50 @@
+2-Switch MLAG Configurations
+============================================
+The flatfiles in this repository will set up the MLAG configuration between two switches [leafs] and two servers connected to that switches. 
+
+Topology
+--------
+2 switches connected  with each other (MLAG), and two hosts connected to both switches
+
+
+Playbook Package
+================
+
+Pre-resiquite
+-------------
+
+1. Make sure Ansible is configured. 
+2. Make sure switches have latest OS, are with default configuration and with license installed.
+3. Server must be running Ubuntu, Centos or Rhel
+4. Physical connection should be exactly same as shown in topology file.
+
+
+Running this playbook will configure the system based on the topology attached in this package. The directory will contain following files and sub-directory:
+
+1. site.yml             # Change interface speed if needed 
+2. hosts                # Inside the file, Change Management IP address of the switches and servers (in this example,
+                        # switches are named as leaf1 and leaf2.
+                        # Inside the file, Change the name of your switches or servers to exactly matching this file,
+                        # or change this file as per your switch name. If you change this file, then change the folder
+                        # names under inventory folder too.
+                        # Inside the file, Change the password of switches and the servers.
+3. roles/               # Sub folder carring configurations.
+4. roles/<switch>/tasks/main.yml  # The task file to configure switch, change speed if needed.
+5. roles/servers/inventory/<server>/<interface_file>  # Ethernet file configuration.
+8. roles/servers/tasks/main.yml          # No change required.
+10. roles/<switch>/tasks/main.yml        # The task file to configure the mlag over the each switch.
+                                         # No Change needed
+
+Running Configuration Package
+=============================
+
+Pre-resiquite
+-------------
+
+1. Make sure switches are with default configuration and with license installed.
+2. Server must be running Ubuntu Centos or Rhel. Other servers can be used, but the config files here are for Centos and Rhel.
+3. Physical connection should be exactly same as shown in topology file.
+
+Following files for uploading and running on the switch
+
+1. <swicth_name>.cfg  # <swicth_name = leaf1; leaf2;>

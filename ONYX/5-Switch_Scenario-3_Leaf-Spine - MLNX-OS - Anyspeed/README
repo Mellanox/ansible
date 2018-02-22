@@ -1,0 +1,45 @@
+5-Switch_Leaf-Spine with MLAG Configurations
+============================================
+The flatfiles in this repository will set up L2/L3 routing between the leafs and spines, and will configure MLAG between the two top-of-rack switches and one server in that rack. 
+
+Topology
+--------
+This demo runs on a spine-leaf topology with single dual-attached host running with uplink mlag, and single attached host with standalobe leaf. The ansible playbook requires an out-of-band management network that provides access to eth0 on all of the in-band devices. Toplogy picture is attached in the zip file package.
+
+
+Playbook Package
+================
+
+Pre-resiquite
+-------------
+
+1. Make sure Ansible is configured. 
+2. Make sure switches have latest OS, are with default configuration and with license installed.
+3. Server must be running Ubuntu, Centos or Rhel
+4. Physical connection should be exactly same as shown in topology file.
+
+
+Running this playbook will configure the system based on the topology attached in this package. The directory will contain following files and sub-directory:
+
+1. site.yml         # No change required. 
+2. hosts            # Inside the file, Change Management IP address of the switches and servers (in this example, servers are named as network is configured with DNS settings).
+                    # Inside the file, Change the name of your switches or servers to exactly matching this file, or change this file as per your switch name. If you change this file, then change the folder names under inventory folder too.
+                    # Inside the file, Change the password of switches.
+3. roles/           # Sub folder carring configurations.
+4. roles/<switch/server>/tasks/main.yml  # The task file to configure switch/server, change speed if needed.
+5. roles/<server>/inventory/<interface_file>  # Server Ethernet file configuration, to be copied to the server
+
+
+Running Configuration Package
+=============================
+
+Pre-resiquite
+-------------
+
+1. Make sure switches are with default configuration and with license installed.
+2. Server must be running Ubuntu 16.04 or later. Other servers can be used, but the config files here are for Ubuntu.
+3. Physical connection should be exactly same as shown in topology file.
+
+Following files for uploading and running on the switch
+
+1. <swicth_name>.cfg  # <swicth_name = spine1; spine2; leaf1; leaf2; leaf3>

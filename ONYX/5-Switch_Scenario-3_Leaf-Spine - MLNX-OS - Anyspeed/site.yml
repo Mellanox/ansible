@@ -1,0 +1,77 @@
+---
+
+# configure l3 leaf-spine
+
+- name: configure spine 1
+  hosts: spine1
+  connection: network_cli
+  gather_facts: no
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+  roles:
+    - spine1
+
+- name: configure spine 2
+  hosts: spine2
+  connection: network_cli
+  gather_facts: no
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+  roles:
+    - spine2
+
+- name: configure leaf 1
+  hosts: leaf1
+  connection: network_cli
+  gather_facts: no
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+  roles:
+    - leaf1
+
+- name: configure leaf 2
+  hosts: leaf2
+  connection: network_cli
+  gather_facts: no
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+  roles:
+    - leaf2
+
+- name: configure leaf 3
+  hosts: leaf3
+  connection: network_cli
+  gather_facts: no
+  become: yes
+  become_method: enable
+  vars:
+    ansible_network_os: onyx
+  roles:
+    - leaf3
+
+- name: configure host1
+  hosts: servers
+  connection: ssh
+  gather_facts: no
+  become: yes
+  remote_user: root
+  roles:
+    - host1
+
+- name: configure host2
+  hosts: servers
+  connection: ssh
+  gather_facts: no
+  become: yes
+  remote_user: root
+  roles:
+    - host2
+    

@@ -1,0 +1,63 @@
+---
+
+# This task for coniguring leaf3 switch
+
+- name: configure protocols
+  onyx_protocol:
+    spanning_tree: disabled
+    ip_routing: enabled
+    bgp: enabled
+    ospf: enabled
+
+- name: configure interfaces
+  onyx_interface:
+    aggregate:
+      - name: Eth1/5
+        description: spine1-link
+      - name: Eth1/25
+        description: spine2-link
+      - name: Eth1/49
+        description: host2-link
+    state: enabled
+
+- name: configure loopback interface
+  onyx_interface:
+    name: Loopback 0
+    description: router interface
+
+- name: configure l3 interfaces
+  onyx_l3_interface:
+    aggregate:
+      - name: Loopback 0
+        ipv4: 10.0.0.13/32
+      - name: Eth1/5
+      - ipv4: 100.0.0.1/24
+      - name: Eth1/25
+      - ipv4: 100.10.0.1/24
+      - name: Eth1/49
+      - ipv4: 172.16.2.254/24
+
+- name: configure ospf
+  onyx_ospf:
+    ospf: 1
+    router_id: 10.0.0.13
+    interfaces:
+      - name: Loopback 0
+      - area: 0.0.0.0
+      - name: Eth1/5
+      - area: 0.0.0.0
+      - name: Eth1/25
+      - area: 0.0.0.0
+
+- name: configure bgp router
+  onyx_bgp:
+    as_number: 65013
+    router_id: 10.0.0.13
+    neighbors:
+      - remote_as: 65021
+        neighbor: 10.0.0.21
+      - remote_as: 65022
+        neighbor: 10.0.0.22
+    networks:
+      - 172.16.2.0/24
+    state: present
