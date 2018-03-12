@@ -1,0 +1,34 @@
+#########
+## Configured by Ansible
+#########
+
+# Management interface
+auto eth0
+iface eth0 inet dhcp
+    alias management interface
+    vrf mgmt
+
+auto swp7
+iface swp7
+    address 10.2.5.1/24
+
+auto swp11
+iface swp11
+    bridge-access 13
+
+auto bridge
+iface bridge
+    bridge-ports swp11
+    bridge-vids 13
+    bridge-vlan-aware yes
+
+auto mgmt
+iface mgmt
+    address 127.0.0.1/8
+    vrf-table auto
+
+auto vlan13
+iface vlan13
+    address 10.2.4.254/24
+    vlan-id 13
+    vlan-raw-device bridge

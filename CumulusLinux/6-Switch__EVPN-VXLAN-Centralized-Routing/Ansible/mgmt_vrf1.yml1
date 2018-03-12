@@ -1,0 +1,13 @@
+---
+- hosts: network
+  become: yes
+  tasks:
+  - name: Enable Management VRF
+    command: net add vrf mgmt
+
+  - name: Commit Change
+    command: net commit
+    async: 1
+    poll: 0
+    ignore_errors: true
+

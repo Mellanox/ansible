@@ -1,0 +1,32 @@
+cumulus@leaf03:mgmt-vrf:~$ net show configuration commands
+net del all
+net add bridge bridge ports swp11
+net add bridge bridge vids 13
+net add bridge bridge vlan-aware
+net add interface eth0 alias management interface
+net add interface eth0 ip address dhcp
+net add interface eth0 vrf mgmt
+net add interface swp11 bridge access 13
+net add interface swp5-6,8
+net add interface swp7 ip address 10.2.5.1/24
+net add vlan 13 ip address 10.2.4.254/24
+net add vlan 13 vlan-id 13
+net add vlan 13 vlan-raw-device bridge
+net add vrf mgmt ip address 127.0.0.1/8
+net add vrf mgmt vrf-table auto
+net add hostname leaf03
+net add interface swp1-16 breakout 1x
+net add interface swp5-6,8 ipv6 nd ra-interval 10
+net del interface swp5-6,8 ipv6 nd suppress-ra
+net add routing defaults datacenter
+net add routing service integrated-vtysh-config
+net add routing route 0.0.0.0/0 10.2.4.200
+
+
+
+There are some configuration commands that are not yet supported by nclu.
+The following will append those commands to the appropriate files.
+=======================================================================
+printf 'username cumulus nopassword\n' >> /etc/frr/frr.conf
+printf 'router bgp 65013\n  coalesce-time 1200\n' >> /etc/frr/frr.conf
+cumulus@leaf03:mgmt-vrf:~$

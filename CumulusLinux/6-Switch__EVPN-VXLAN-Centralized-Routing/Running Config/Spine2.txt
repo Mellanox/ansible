@@ -1,0 +1,59 @@
+cumulus@spine02:mgmt-vrf:~$ net show configuration commands
+net del all
+net add loopback lo ip address 10.100.100.2/32
+net add loopback lo alias loopback interface
+net add interface eth0 ip address dhcp
+net add interface eth0 alias management interface
+net add interface eth0 vrf mgmt
+net add interface swp1 alias to Leaf01
+net add interface swp2 alias to Leaf02
+net add interface swp3 alias to Leaf03
+net add interface swp11 alias to Leaf01-A1
+net add interface swp12 alias to Leaf02-A1
+net add interface swp13 alias to Leaf03-A1
+net add vrf mgmt ip address 127.0.0.1/8
+net add vrf mgmt vrf-table auto
+net add hostname spine02
+net add interface swp1-16 breakout 1x
+net add interface swp1-3,11-13 ipv6 nd ra-interval 10
+net del interface swp1-3,11-13 ipv6 nd suppress-ra
+net add routing service integrated-vtysh-config
+net add routing log file /var/log/quagga/quagga.log
+net add routing log timestamp precision 6
+net add bgp autonomous-system 65532
+net add bgp router-id 10.100.100.2
+net add bgp bestpath as-path multipath-relax
+net add bgp neighbor swp1 interface remote-as external
+net add bgp neighbor swp2 interface remote-as external
+net add bgp neighbor swp3 interface remote-as external
+net add bgp neighbor swp11 interface remote-as external
+net add bgp neighbor swp12 interface remote-as external
+net add bgp neighbor swp13 interface remote-as external
+net add bgp ipv4 unicast network 10.100.100.2/32
+net add time zone Etc/UTC
+net add time ntp server 0.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 1.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 2.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 3.cumulusnetworks.pool.ntp.org iburst
+net add time ntp source eth0
+net add dns nameserver ipv4 10.20.4.187 vrf mgmt
+net add dns nameserver ipv4 10.20.4.167 vrf mgmt
+net add dns nameserver ipv4 10.2.8.150 vrf mgmt
+net add dns nameserver ipv4 10.2.8.3 vrf mgmt
+net add dns nameserver ipv4 10.2.8.4 vrf mgmt
+net add snmp-server listening-address localhost
+
+
+There are some configuration commands that are not yet supported by nclu.
+The following will append those commands to the appropriate files.
+=======================================================================
+printf 'username cumulus nopassword\n' >> /etc/frr/frr.conf
+printf 'router-id 10.100.100.2\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp1 activate\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp2 activate\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp3 activate\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp11 activate\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp12 activate\n' >> /etc/frr/frr.conf
+printf 'router bgp 65532\n  address-family l2vpn evpn\n  neighbor swp13 activate\n' >> /etc/frr/frr.conf
+printf 'line vty\n' >> /etc/frr/frr.conf
+cumulus@spine02:mgmt-vrf:~$
