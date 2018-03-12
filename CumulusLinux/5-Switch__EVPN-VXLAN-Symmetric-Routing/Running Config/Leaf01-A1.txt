@@ -1,0 +1,84 @@
+cumulus@leaf01-A1:mgmt-vrf:~$ net show configuration commands
+net del all
+net add bond bond01 bond slaves swp7
+net add bond peerlink bond slaves swp15,swp16
+net add bond bond01 bridge access 13
+net add bond bond01 clag id 1
+net add bridge bridge ports bond01,peerlink,vni13,vxlan4001
+net add bridge bridge pvid 1
+net add bridge bridge vids 13
+net add bridge bridge vlan-aware
+net add interface eth0 alias management interface
+net add interface eth0 ip address dhcp
+net add interface eth0 vrf mgmt
+net add interface peerlink.4094 clag backup-ip 10.1.1.2
+net add interface peerlink.4094 clag peer-ip 169.254.1.2
+net add interface peerlink.4094 clag priority 100
+net add interface peerlink.4094 clag sys-mac 44:39:39:ff:40:94
+net add interface peerlink.4094 ip address 169.254.1.1/30
+net add interface swp15-16 alias to Leaf02
+net add interface swp16 post-up 'ip link set swp16 promisc on'
+net add interface swp5 alias to Spine01
+net add interface swp6 alias to Spine02
+net add interface swp7 alias to Server01
+net add interface swp7,15-16 link autoneg on
+net add loopback lo alias loopback interface
+net add loopback lo clag vxlan-anycast-ip 11.10.10.1
+net add loopback lo ip address 11.1.1.1/32
+net add vlan 13 ip address 10.2.4.50/24
+net add vlan 13 ip address-virtual 00:00:00:00:00:1a 10.2.4.200/24
+net add vlan 13 vlan-id 13
+net add vlan 13 vlan-raw-device bridge
+net add vlan 13 vrf vrf1
+net add vlan 4001 hwaddress 44:39:39:FF:40:94
+net add vlan 4001 vlan-id 4001
+net add vlan 4001 vlan-raw-device bridge
+net add vlan 4001 vrf vrf1
+net add vrf mgmt ip address 127.0.0.1/8
+net add vrf mgmt,vrf1 vrf-table auto
+net add vxlan vni13 bridge access 13
+net add vxlan vni13 stp bpduguard
+net add vxlan vni13 stp portbpdufilter
+net add vxlan vni13 vxlan id 13
+net add vxlan vni13,vxlan4001 bridge learning off
+net add vxlan vni13,vxlan4001 vxlan local-tunnelip 11.1.1.1
+net add vxlan vxlan4001 bridge access 4001
+net add vxlan vxlan4001 vxlan id 104001
+net add hostname leaf01-A1
+net add interface swp1-16 breakout 1x
+net add interface swp5-6 ipv6 nd ra-interval 10
+net del interface swp5-6 ipv6 nd suppress-ra
+net add routing service integrated-vtysh-config
+net add routing log syslog
+net add routing log timestamp precision 6
+net add bgp autonomous-system 65101
+net add bgp router-id 11.1.1.1
+net add bgp bestpath as-path multipath-relax
+net add bgp neighbor swp5 interface remote-as external
+net add bgp neighbor swp6 interface remote-as external
+net add bgp ipv4 unicast network 11.1.1.1/32
+net add bgp ipv4 unicast network 11.10.10.1/32
+net add bgp l2vpn evpn  neighbor swp5 activate
+net add bgp l2vpn evpn  neighbor swp6 activate
+net add bgp l2vpn evpn  advertise-all-vni
+net add time zone Etc/UTC
+net add time ntp server 0.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 1.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 2.cumulusnetworks.pool.ntp.org iburst
+net add time ntp server 3.cumulusnetworks.pool.ntp.org iburst
+net add time ntp source eth0
+net add dns nameserver ipv4 10.20.4.187 vrf mgmt
+net add dns nameserver ipv4 10.20.4.167 vrf mgmt
+net add dns nameserver ipv4 10.2.8.150 vrf mgmt
+net add dns nameserver ipv4 10.2.8.3 vrf mgmt
+net add dns nameserver ipv4 10.2.8.4 vrf mgmt
+net add snmp-server listening-address localhost
+
+
+There are some configuration commands that are not yet supported by nclu.
+The following will append those commands to the appropriate files.
+=======================================================================
+printf 'username cumulus nopassword\n' >> /etc/frr/frr.conf
+printf 'router-id 11.1.1.1\n' >> /etc/frr/frr.conf
+cumulus@leaf01-A1:mgmt-vrf:~$
+

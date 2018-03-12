@@ -1,0 +1,7 @@
+This playbook helps configure the system end to end with symmetric routing which is running. Two overlays - 10.2.4.0/24 and 10.6.4.0/24. The default Gateway for overlay network is 10.2.4.200 and 10.6.4.200. L3 VNI with names VRF vrf1 is used as the routing VRF. Please make sure that your servers have right default gateways configured before you start end to end ping. Some pings may be lost in begining as the MAC has to be learned.
+
+STEPS - 
+
+ON BOTH HOSTS MAKE THE DEAFULT GATEWAY
+PING THE DEFAULT GATEWAYS TO SEE YOUR PINGS ARE FINE
+START THE PING FROM BOTH ENDS BEFORE YOU CAN SEE THE PINGS WORKING FINE.

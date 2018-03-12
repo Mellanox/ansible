@@ -1,0 +1,122 @@
+#########
+## Configured by Ansible
+#########
+
+# Loopback interface
+auto lo
+iface lo inet loopback
+    address 11.1.1.1/32
+    clagd-vxlan-anycast-ip 11.10.10.1
+    alias loopback interface
+
+# Management interface
+auto eth0
+iface eth0 inet dhcp
+    alias management interface
+    vrf mgmt
+auto bridge
+iface bridge
+    bridge-ports bond01 peerlink vni13 vxlan4001
+    bridge-vids 13
+    bridge-pvid 1
+    bridge-vlan-aware yes
+
+auto mgmt
+iface mgmt
+    address 127.0.0.1/8
+    vrf-table auto
+
+# Port to Server01
+auto swp7
+iface swp7
+link-autoneg on
+    alias to Server01
+    # This is required for Vagrant only
+    # post-up ip link set swp1 promisc on
+
+# Port to Leaf02
+auto swp15
+iface swp15
+link-autoneg on
+    alias to Leaf02
+    # This is required for Vagrant only
+    # post-up ip link set swp15 promisc on
+
+# Port to Leaf02
+auto swp16
+iface swp16
+link-autoneg on
+    alias to Leaf02
+    # This is required for Vagrant only
+    post-up ip link set swp16 promisc on
+
+# Port to Spine01
+auto swp5
+iface swp5
+    alias to Spine01
+
+# Port to Spine02
+auto swp6
+iface swp6
+    alias to Spine02
+
+# CLAG Peerlink bond
+auto peerlink
+iface peerlink
+    bond-slaves swp15 swp16
+
+# CLAG Peerlink L2 interface.
+# This creates VLAN 4094 that only lives on the peerlink bond
+# No other interface will be aware of VLAN 4094
+auto peerlink.4094
+iface peerlink.4094
+    address 169.254.1.1/30
+    clagd-peer-ip 169.254.1.2
+    clagd-backup-ip 10.1.1.2
+    clagd-sys-mac 44:39:39:ff:40:94
+    clagd-priority 100
+# Bond to Server01
+auto bond01
+iface bond01
+    bond-slaves swp7
+    bridge-access 13
+    clag-id 1
+
+auto vlan13
+iface vlan13
+    address 10.2.4.50/24
+    address-virtual 00:00:00:00:00:1a 10.2.4.200/24
+    vlan-id 13
+    vlan-raw-device bridge
+    vrf vrf1
+
+# Define the bridge for STP
+# VxLAN Tunnel for Server1-Server3 (Vlan 13)
+auto vni13
+iface vni13
+    vxlan-id 13
+    vxlan-local-tunnelip 11.1.1.1
+    bridge-access 13
+    bridge-learning off
+    mstpctl-bpduguard yes
+    mstpctl-portbpdufilter yes
+
+auto vxlan4001
+iface vxlan4001
+    vxlan-id 104001
+    vxlan-local-tunnelip 11.1.1.1
+    bridge-learning off
+    bridge-access 4001
+
+auto vrf1
+iface vrf1
+   vrf-table auto
+
+#L3 VLAN interface per tenant (for L3 VNI)
+
+auto vlan4001
+iface vlan4001
+    hwaddress 44:39:39:FF:40:94
+    vlan-id 4001
+    vlan-raw-device bridge
+    vrf vrf1
