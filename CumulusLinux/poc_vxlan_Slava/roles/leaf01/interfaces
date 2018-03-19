@@ -1,0 +1,75 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*.intf
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+    address 2.2.2.21/32
+
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
+
+auto swp1
+iface swp1
+    bridge-access 48
+
+auto swp17
+iface swp17
+    link-speed 40000
+
+auto swp18
+iface swp18
+    link-speed 40000
+
+auto swp19
+iface swp19
+    link-speed 40000
+
+auto swp32
+iface swp32
+    address 10.1.32.2/30
+    link-speed 40000
+    vrf blue
+
+auto blue
+iface blue
+    vrf-table auto
+
+auto bridge
+iface bridge
+    bridge-ports swp1 vni-1048 vni-104800
+    bridge-vids 48 4001
+    bridge-vlan-aware yes
+
+auto vlan48
+iface vlan48
+    address 10.1.48.21/22
+    address-virtual 00:00:00:00:00:23 10.1.48.1/22
+    vlan-id 48
+    vlan-raw-device bridge
+    vrf blue
+
+auto vlan4001
+iface vlan4001
+    vlan-id 4001
+    vlan-raw-device bridge
+    vrf blue
+
+auto vni-1048
+iface vni-1048
+    bridge-access 48
+    bridge-learning off
+    mstpctl-bpduguard yes
+    mstpctl-portbpdufilter yes
+    vxlan-id 1048
+    vxlan-local-tunnelip 2.2.2.21
+
+auto vni-104800
+iface vni-104800
+    bridge-access 4001
+    bridge-learning off
+    vxlan-id 104800
+    vxlan-local-tunnelip 2.2.2.21
